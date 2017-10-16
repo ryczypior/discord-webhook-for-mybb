@@ -45,7 +45,7 @@ function discord_webhooks_info() {
         "guid" => "",
         "language_file" => "discord_webhooks",
         "language_prefix" => "discord_webhooks_",
-        "codename" => "discord4mybb"
+        "codename" => "discord_wehooks_for_mybb"
     );
 }
 
