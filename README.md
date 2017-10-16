@@ -1,4 +1,3 @@
-# discord-webhook-for-mybb
 Discord Webhook for MyBB
 ========================
 
