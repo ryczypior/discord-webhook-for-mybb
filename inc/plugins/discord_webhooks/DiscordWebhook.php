@@ -32,7 +32,7 @@ class DiscordWebhook {
         if (!in_array($fid, $fids) && $mybb->settings['discord_webhooks_forums'] != -1) {
             throw new Exception('Board is not enabled');
         }
-        if (strpos($mybb->settings['discord_webhooks_url'], 'https://discordapp.com/api/webhooks/') === false) {
+        if (preg_match('/^\s*https?:\/\/(ptb\.)?discordapp\.com\/api\/webhooks\//i', $mybb->settings['discord_webhooks_url']) == 0) {
             throw new Exception('Invalid Discord Webhook URL');
         }
         $this->endpointURL = $mybb->settings['discord_webhooks_url'];
