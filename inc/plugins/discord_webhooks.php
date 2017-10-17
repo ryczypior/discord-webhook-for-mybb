@@ -55,15 +55,15 @@ function discord_webhooks_install() {
 
     $gid = $db->insert_query('settinggroups', array(
         'name' => 'discord_webhooks',
-        'title' => $lang->discord_webhook_settinggroups_title,
-        'description' => $lang->discord_webhook_settinggroups_description,
+        'title' => $db->escape_string($lang->discord_webhook_settinggroups_title),
+        'description' => $db->escape_string($lang->discord_webhook_settinggroups_description),
             ));
     $position = 1;
     $cfg = array(
         array(
             'name' => 'discord_webhooks_enabled',
-            'title' => $lang->discord_webhooks_enabled,
-            'description' => $lang->discord_webhooks_enabled_description,
+            'title' => $db->escape_string($lang->discord_webhooks_enabled),
+            'description' => $db->escape_string($lang->discord_webhooks_enabled_description),
             'optionscode' => 'yesno',
             'value' => '1',
             'isdefault' => 1,
@@ -72,8 +72,8 @@ function discord_webhooks_install() {
         ),
         array(
             'name' => 'discord_webhooks_url',
-            'title' => $lang->discord_webhooks_url,
-            'description' => $lang->discord_webhooks_url_description,
+            'title' => $db->escape_string($lang->discord_webhooks_url),
+            'description' => $db->escape_string($lang->discord_webhooks_url_description),
             'optionscode' => 'text',
             'value' => 'https://',
             'isdefault' => 1,
@@ -82,8 +82,8 @@ function discord_webhooks_install() {
         ),
         array(
             'name' => 'discord_webhooks_forums',
-            'title' => $lang->discord_webhooks_forums,
-            'description' => $lang->discord_webhooks_forums_description,
+            'title' => $db->escape_string($lang->discord_webhooks_forums),
+            'description' => $db->escape_string($lang->discord_webhooks_forums_description),
             'optionscode' => 'forumselect',
             'isdefault' => 1,
             'disporder' =>$position++,
@@ -91,8 +91,8 @@ function discord_webhooks_install() {
         ),
         array(
             'name' => 'discord_webhooks_botname',
-            'title' => $lang->discord_webhooks_botname,
-            'description' => $lang->discord_webhooks_botname_description,
+            'title' => $db->escape_string($lang->discord_webhooks_botname),
+            'description' => $db->escape_string($lang->discord_webhooks_botname_description),
             'optionscode' => 'text',
             'value' => 'MYBB Bot',
             'isdefault' => 1,
@@ -101,9 +101,9 @@ function discord_webhooks_install() {
         ),
         array(
             'name' => 'discord_webhooks_show',
-            'title' => $lang->discord_webhooks_show,
-            'description' => $lang->discord_webhooks_show_description,
-            'optionscode' => sprintf('select\n0=%s\n1=%s\n2=%s', $lang->discord_webhooks_show_n0, $lang->discord_webhooks_show_n1, $lang->discord_webhooks_show_n2),
+            'title' => $db->escape_string($lang->discord_webhooks_show),
+            'description' => $db->escape_string($lang->discord_webhooks_show_description),
+            'optionscode' => sprintf('select\n0=%s\n1=%s\n2=%s', $db->escape_string($lang->discord_webhooks_show_n0), $db->escape_string($lang->discord_webhooks_show_n1), $db->escape_string($lang->discord_webhooks_show_n2)),
             'value' => '2',
             'isdefault' => 1,
             'disporder' =>$position++,
@@ -111,20 +111,20 @@ function discord_webhooks_install() {
         ),
         array(
             'name' => 'discord_webhooks_new_post_message',
-            'title' => $lang->discord_webhooks_new_post_message,
-            'description' => $lang->discord_webhooks_new_post_message_description,
+            'title' => $db->escape_string($lang->discord_webhooks_new_post_message),
+            'description' => $db->escape_string($lang->discord_webhooks_new_post_message_description),
             'optionscode' => 'textarea',
-            'value' => $lang->discord_webhooks_new_post_message_value,
+            'value' => $db->escape_string($lang->discord_webhooks_new_post_message_value),
             'isdefault' => 1,
             'disporder' =>$position++,
             'gid' => $gid,
         ),
         array(
             'name' => 'discord_webhooks_new_thread_message',
-            'title' => $lang->discord_webhooks_new_thread_message,
-            'description' => $lang->discord_webhooks_new_thread_message_description,
+            'title' => $db->escape_string($lang->discord_webhooks_new_thread_message),
+            'description' => $db->escape_string($lang->discord_webhooks_new_thread_message_description),
             'optionscode' => 'textarea',
-            'value' => $lang->discord_webhooks_new_thread_message_value,
+            'value' => $db->escape_string($lang->discord_webhooks_new_thread_message_value),
             'isdefault' => 1,
             'disporder' =>$position++,
             'gid' => $gid,
