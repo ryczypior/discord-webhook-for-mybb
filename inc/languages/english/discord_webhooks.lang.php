@@ -43,3 +43,10 @@ $l['discord_webhooks_new_post_message_value'] = '@{username} wrote a new post *{
 $l['discord_webhooks_new_thread_message'] = 'New thread message';
 $l['discord_webhooks_new_thread_message_description'] = 'New thread message content. You can use:<br><strong>{username}</strong> - thread author,<br><strong>{threadtitle}</strong> - thread title,<br><strong>{boardname}</strong> - board name,<br><strong>{url}</strong> thread URL';
 $l['discord_webhooks_new_thread_message_value'] = '@{username} created a new thread *{threadtitle}* - {url} on *{boardname}* board';
+
+$l['discord_webhooks_ignored_forums'] = 'Ignored boards';
+$l['discord_webhooks_ignored_forums_description'] = 'Boards from which threads and/or posts are ignored';
+$l['discord_webhooks_new_thread_enabled'] = 'Push information about new threads';
+$l['discord_webhooks_new_thread_enabled_description'] = 'Do you want to show information about new threads?';
+$l['discord_webhooks_new_post_enabled'] = 'Push information about new posts';
+$l['discord_webhooks_new_thread_enabled_description'] = 'Do you want to show information about new posts?';

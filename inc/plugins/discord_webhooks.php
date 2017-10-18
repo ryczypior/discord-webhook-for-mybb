@@ -24,8 +24,8 @@ if (!defined("IN_MYBB")) {
 }
 define("IN_DISCORDWEBHOOKS", true);
 
-$plugins->add_hook('datahandler_post_insert_thread_end', array('DiscordWebhook', 'newThreadPost'));
-$plugins->add_hook('datahandler_post_insert_post_end', array('DiscordWebhook', 'newThreadPost'));
+$plugins->add_hook('datahandler_post_insert_thread_end', array('DiscordWebhook', 'newThread'));
+$plugins->add_hook('datahandler_post_insert_post_end', array('DiscordWebhook', 'newPost'));
 
 require_once('discord_webhooks/DiscordWebhook.php');
 
@@ -81,9 +81,39 @@ function discord_webhooks_install() {
             'gid' => $gid,
         ),
         array(
+            'name' => 'discord_webhooks_new_thread_enabled',
+            'title' => $db->escape_string($lang->discord_webhooks_new_thread_enabled),
+            'description' => $db->escape_string($lang->discord_webhooks_new_thread_enabled_description),
+            'optionscode' => 'yesno',
+            'value' => '1',
+            'isdefault' => 1,
+            'disporder' =>$position++,
+            'gid' => $gid,
+        ),
+        array(
+            'name' => 'discord_webhooks_new_post_enabled',
+            'title' => $db->escape_string($lang->discord_webhooks_new_post_enabled),
+            'description' => $db->escape_string($lang->discord_webhooks_new_post_enabled_description),
+            'optionscode' => 'yesno',
+            'value' => '1',
+            'isdefault' => 1,
+            'disporder' =>$position++,
+            'gid' => $gid,
+        ),
+        array(
             'name' => 'discord_webhooks_forums',
             'title' => $db->escape_string($lang->discord_webhooks_forums),
             'description' => $db->escape_string($lang->discord_webhooks_forums_description),
+            'optionscode' => 'forumselect',
+            'isdefault' => 1,
+            'value' => -1,
+            'disporder' =>$position++,
+            'gid' => $gid,
+        ),
+        array(
+            'name' => 'discord_webhooks_ignored_forums',
+            'title' => $db->escape_string($lang->discord_webhooks_ignored_forums),
+            'description' => $db->escape_string($lang->discord_webhooks_ignored_forums_description),
             'optionscode' => 'forumselect',
             'isdefault' => 1,
             'disporder' =>$position++,
