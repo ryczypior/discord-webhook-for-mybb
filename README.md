@@ -17,7 +17,7 @@ After you save these settings, you should see new threads and posts from selecte
 
 Muliple instances of this plugin:
 =================================
-You can install multiple instances of this plugin, but it's need some changes from your side. Firstly you have to specify the suffix - it's a name you will use to differ your another plugin from first one. It should contain only alphanumeric and underscore characters. Let it be *instance_1* for example. You need to:
+You can install multiple instances of this plugin, but it's need some changes from your side. Firstly you have to specify the suffix - it's a name you will use to differ your another plugin from the first one. It should contain only alphanumeric and underscore characters. Let it be *instance_1* for example. You need to:
 * download multiinstance plugin file from https://raw.githubusercontent.com/ryczypior/discord-webhook-for-mybb/master/multiinstance/discord_webhooks%7Bsuffix%7D.php
 * change its filename replacing the {suffix} part by your suffix (in this example it will be discord_webhooksinstance_1.php)
 * edit this file and replace every {suffix} part to your suffix (in this example every {suffix} part will be replaced by instance_1, so the first method will be renamed to discord_webhooksinstance_1_info()
