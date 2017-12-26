@@ -227,7 +227,7 @@ if (!class_exists('DiscordWebhook')) {
                                     'author' => array(
                                         'name' => $entry->post_insert_data['username'],
                                         'url' => $discordWebhook->getFullUrl('/member.php?action=profile&uid=' . $entry->post_insert_data['uid']),
-                                        'icon_url' => ''
+                                        'icon_url' => '',//$avatar
                                     ),
                                     'thumbnail' => $thumbnail,
                                 ),
@@ -320,7 +320,7 @@ if (!class_exists('DiscordWebhook')) {
                                     'author' => array(
                                         'name' => $entry->post_insert_data['username'],
                                         'url' => $discordWebhook->getFullUrl('/member.php?action=profile&uid=' . $entry->post_insert_data['uid']),
-                                        'icon_url' => $avatar
+                                        'icon_url' => '',//$avatar
                                     ),
                                     'thumbnail' => $thumbnail,
                                 ),
