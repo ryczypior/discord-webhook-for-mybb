@@ -238,7 +238,7 @@ if (!class_exists('DiscordWebhook')) {
                             'posttitle' => $entry->post_insert_data['subject'],
                             'threadtitle' => '',
                             'boardname' => '',
-                            'url' => $discordWebhook->getFullUrl(get_post_link($entry->return_values['pid'], $entry->post_insert_data['tid'])),
+                            'url' => $discordWebhook->getFullUrl(get_post_link($entry->return_values['pid'], $entry->post_insert_data['tid']))."#pid".$entry->return_values['pid'],
                         ];
                         $message = $mybb->settings['discord_webhooks' . $suffix . '_new_post_message'];
                         if (empty($message)) {
