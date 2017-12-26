@@ -40,9 +40,13 @@ $l['discord_webhooks_show_n2'] = 'Wiadomość z informacją wraz z rozszerzoną 
 $l['discord_webhooks_new_post_message'] = 'Wiadomość o nowym poście';
 $l['discord_webhooks_new_post_message_description'] = 'Zawartość wiadomości o nowym poście. Możesz użyć:<br><strong>{username}</strong> - nazwa autora posta,<br><strong>{title}</strong> - tytuł posta,<br><strong>{threadtitle}<strong> - tytuł wątku,<br><strong>{boardname}</strong> - nazwa działu,<br><strong>{url}</strong> adres URL posta';
 $l['discord_webhooks_new_post_message_value'] = '@{username} napisał(-a) nowy post *{posttitle}* - {url} w dziale *{boardname}*';
+$l['discord_webhooks_new_post_color'] = 'Kolor etykiety dla nowego posta';
+$l['discord_webhooks_new_post_color_description'] = 'Musisz wskazać kolor RGB w wartości heksadecymalnej, np. #CC9977';
 $l['discord_webhooks_new_thread_message'] = 'Wiadomość o nowym wątku';
 $l['discord_webhooks_new_thread_message_description'] = 'Zawartość wiadomości o nowym wątku. Możesz użyć:<br><strong>{username}</strong> - nazwa autora wątku,<br><strong>{title}</strong> - tytuł wątku,<br><strong>{boardname}</strong> - nazwa działu,<br><strong>{url}</strong> adres URL wątku';
 $l['discord_webhooks_new_thread_message_value'] = '@{username} utworzył(-a) nowy wątek *{threadtitle}* - {url} w dziale *{boardname}*';
+$l['discord_webhooks_new_thread_color'] = 'Kolor etykiety dla nowego wątku';
+$l['discord_webhooks_new_thread_color_description'] = 'Musisz wskazać kolor RGB w wartości heksadecymalnej, np. #CC9977';
 
 $l['discord_webhooks_ignored_forums'] = 'Ignorowane działy';
 $l['discord_webhooks_ignored_forums_description'] = 'Działy, z których wątki i posty mają być ignorowane';

@@ -40,9 +40,13 @@ $l['discord_webhooks_show_n2'] = 'Info message with long rich text (author, titl
 $l['discord_webhooks_new_post_message'] = 'New post message';
 $l['discord_webhooks_new_post_message_description'] = 'New post message content. You can use:<br><strong>{username}</strong> - post author,<br><strong>{posttitle}</strong> - post title,<br><strong>{threadtitle}<strong> - thread title,<br><strong>{boardname}</strong> - board name,<br><strong>{url}</strong> post URL';
 $l['discord_webhooks_new_post_message_value'] = '@{username} wrote a new post *{posttitle}* - {url} on *{boardname}* board';
+$l['discord_webhooks_new_post_color'] = 'New post label color';
+$l['discord_webhooks_new_post_color_description'] = 'You have to use RGB color HEX value, e.g. #CC9977';
 $l['discord_webhooks_new_thread_message'] = 'New thread message';
 $l['discord_webhooks_new_thread_message_description'] = 'New thread message content. You can use:<br><strong>{username}</strong> - thread author,<br><strong>{threadtitle}</strong> - thread title,<br><strong>{boardname}</strong> - board name,<br><strong>{url}</strong> thread URL';
 $l['discord_webhooks_new_thread_message_value'] = '@{username} created a new thread *{threadtitle}* - {url} on *{boardname}* board';
+$l['discord_webhooks_new_thread_color'] = 'New thread label color';
+$l['discord_webhooks_new_thread_color_description'] = 'You have to use RGB color HEX value, e.g. #CC9977';
 
 $l['discord_webhooks_ignored_forums'] = 'Ignored boards';
 $l['discord_webhooks_ignored_forums_description'] = 'Boards from which threads and/or posts are ignored';

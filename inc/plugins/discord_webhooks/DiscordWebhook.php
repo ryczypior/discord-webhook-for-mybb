@@ -50,7 +50,7 @@ if (!class_exists('DiscordWebhook')) {
                 'content' => $message,
                 'embeds' => $embeds,
                 'tts' => $tts,
-            ));
+            ), JSON_NUMERIC_CHECK);
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $this->endpointURL);
             curl_setopt($ch, CURLOPT_POST, true);
@@ -146,10 +146,19 @@ if (!class_exists('DiscordWebhook')) {
             return $avatar;
         }
 
+        protected function getColorIntFromHex($color) {
+            $color = trim(str_replace('#', '', $color));
+            return hexdec($color);
+        }
+
         static public function newThread($entry, $suffix = '') {
             global $mybb, $db, $lang;
             if ($mybb->settings['discord_webhooks' . $suffix . '_new_thread_enabled']) {
                 $lang->load('discord_webhooks');
+                $color = $mybb->settings['discord_webhooks' . $suffix . '_new_thread_color'];
+                if (empty($color)) {
+                    $color = '#aaaaaa';
+                }
                 //require_once MYBB_ROOT . "inc/class_parser.php";
                 try {
                     if ($entry->return_values['visible'] == 1) {
@@ -180,33 +189,41 @@ if (!class_exists('DiscordWebhook')) {
                         $embeds = null;
                         if (!empty($mybb->settings['discord_webhooks' . $suffix . '_show'])) {
                             $thumbnail = null;
+                            $title = $entry->post_insert_data['subject'];
+                            $url = $replace['url'];
                             $msg = $discordWebhook->formatMessage($entry->post_insert_data['message']);
+                            $query = $db->simple_select("users", "avatar, avatartype", "uid='{$entry->post_insert_data['uid']}'");
+                            $result = $db->fetch_array($query);
+                            $avatar = $result['avatar'];
+                            $avatartype = $result['avatartype'];
+                            if (!empty($avatar)) {
+                                $method = 'getAvatarUrl' . ucfirst($avatartype);
+                                if (!method_exists($this, $method)) {
+                                    $method = 'getAvatarUrlDefault';
+                                }
+                                $avatar = $discordWebhook->$method($avatar);
+                            } else {
+                                $avatar = '';
+                            }
                             $limit = 1000;
                             if ($mybb->settings['discord_webhooks' . $suffix . '_show'] == 1) {
                                 $limit = 100;
                             } else {
-                                $query = $db->simple_select("users", "avatar", "uid='{$entry->post_insert_data['uid']}'");
-                                $avatar = $db->fetch_field($query, "avatar");
-                                $avatartype = $db->fetch_field($query, "avatartype");
-                                if (!empty($avatar)) {
-                                    $method = 'getAvatarUrl' . ucfirst($avatartype);
-                                    if (!method_exists($this, $method)) {
-                                        $method = 'getAvatarUrlDefault';
-                                    }
-                                    $thumbnail = array(
-                                        'url' => $discordWebhook->$method($avatar),
-                                    );
-                                }
+                                $thumbnail = array(
+                                    'url' => $avatar,
+                                );
                             }
                             if (mb_strlen($msg, 'UTF-8') > $limit) {
                                 $msg = mb_strcut($msg, 0, $limit, 'UTF-8') . '...';
                             }
+                            $color = $discordWebhook->getColorIntFromHex($color);
                             $embeds = array(
                                 array(
                                     'type' => "rich",
                                     'title' => $title,
                                     'description' => $msg,
                                     'url' => $url,
+                                    'color' => $color,
                                     'author' => array(
                                         'name' => $entry->post_insert_data['username'],
                                         'url' => $discordWebhook->getFullUrl('/member.php?action=profile&uid=' . $entry->post_insert_data['uid']),
@@ -228,6 +245,10 @@ if (!class_exists('DiscordWebhook')) {
             global $mybb, $db, $lang;
             if ($mybb->settings['discord_webhooks' . $suffix . '_new_post_enabled']) {
                 $lang->load('discord_webhooks');
+                $color = $mybb->settings['discord_webhooks' . $suffix . '_new_post_color'];
+                if (empty($color)) {
+                    $color = '#ffffff';
+                }
                 require_once MYBB_ROOT . "inc/class_parser.php";
                 try {
                     if ($entry->return_values['visible'] == 1) {
@@ -238,7 +259,7 @@ if (!class_exists('DiscordWebhook')) {
                             'posttitle' => $entry->post_insert_data['subject'],
                             'threadtitle' => '',
                             'boardname' => '',
-                            'url' => $discordWebhook->getFullUrl(get_post_link($entry->return_values['pid'], $entry->post_insert_data['tid']))."#pid".$entry->return_values['pid'],
+                            'url' => $discordWebhook->getFullUrl(get_post_link($entry->return_values['pid'], $entry->post_insert_data['tid'])) . "#pid" . $entry->return_values['pid'],
                         ];
                         $message = $mybb->settings['discord_webhooks' . $suffix . '_new_post_message'];
                         if (empty($message)) {
@@ -261,37 +282,45 @@ if (!class_exists('DiscordWebhook')) {
                         $embeds = null;
                         if (!empty($mybb->settings['discord_webhooks' . $suffix . '_show'])) {
                             $thumbnail = null;
+                            $title = $entry->post_insert_data['subject'];
+                            $url = $replace['url'];
                             $msg = $discordWebhook->formatMessage($entry->post_insert_data['message']);
+                            $query = $db->simple_select("users", "avatar, avatartype", "uid='{$entry->post_insert_data['uid']}'");
+                            $result = $db->fetch_array($query);
+                            $avatar = $result['avatar'];
+                            $avatartype = $result['avatartype'];
+                            if (!empty($avatar)) {
+                                $method = 'getAvatarUrl' . ucfirst($avatartype);
+                                if (!method_exists($this, $method)) {
+                                    $method = 'getAvatarUrlDefault';
+                                }
+                                $avatar = $discordWebhook->$method($avatar);
+                            } else {
+                                $avatar = '';
+                            }
                             $limit = 1000;
                             if ($mybb->settings['discord_webhooks' . $suffix . '_show'] == 1) {
                                 $limit = 100;
                             } else {
-                                $query = $db->simple_select("users", "avatar", "uid='{$entry->post_insert_data['uid']}'");
-                                $avatar = $db->fetch_field($query, "avatar");
-                                $avatartype = $db->fetch_field($query, "avatartype");
-                                if (!empty($avatar)) {
-                                    $method = 'getAvatarUrl' . ucfirst($avatartype);
-                                    if (!method_exists($this, $method)) {
-                                        $method = 'getAvatarUrlDefault';
-                                    }
-                                    $thumbnail = array(
-                                        'url' => $discordWebhook->$method($avatar),
-                                    );
-                                }
+                                $thumbnail = array(
+                                    'url' => $avatar,
+                                );
                             }
                             if (mb_strlen($msg, 'UTF-8') > $limit) {
                                 $msg = mb_strcut($msg, 0, $limit, 'UTF-8') . '...';
                             }
+                            $color = $discordWebhook->getColorIntFromHex($color);
                             $embeds = array(
                                 array(
                                     'type' => "rich",
                                     'title' => $title,
                                     'description' => $msg,
                                     'url' => $url,
+                                    'color' => $color,
                                     'author' => array(
                                         'name' => $entry->post_insert_data['username'],
                                         'url' => $discordWebhook->getFullUrl('/member.php?action=profile&uid=' . $entry->post_insert_data['uid']),
-                                        'icon_url' => ''
+                                        'icon_url' => $avatar
                                     ),
                                     'thumbnail' => $thumbnail,
                                 ),
