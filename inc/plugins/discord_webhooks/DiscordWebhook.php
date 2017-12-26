@@ -136,6 +136,16 @@ if (!class_exists('DiscordWebhook')) {
             return $ret;
         }
 
+        protected function getAvatarUrlUpload($avatar) {
+            $avatar = preg_replace('/^\.\//', '', $avatar);
+            $ret = $this->getFullUrl($avatar);
+            return $ret;
+        }
+
+        protected function getAvatarUrlDefault($avatar) {
+            return $avatar;
+        }
+
         static public function newThread($entry, $suffix = '') {
             global $mybb, $db, $lang;
             if ($mybb->settings['discord_webhooks' . $suffix . '_new_thread_enabled']) {
@@ -177,9 +187,14 @@ if (!class_exists('DiscordWebhook')) {
                             } else {
                                 $query = $db->simple_select("users", "avatar", "uid='{$entry->post_insert_data['uid']}'");
                                 $avatar = $db->fetch_field($query, "avatar");
+                                $avatartype = $db->fetch_field($query, "avatartype");
                                 if (!empty($avatar)) {
+                                    $method = 'getAvatarUrl' . ucfirst($avatartype);
+                                    if (!method_exists($this, $method)) {
+                                        $method = 'getAvatarUrlDefault';
+                                    }
                                     $thumbnail = array(
-                                        'url' => $discordWebhook->getFullUrl($avatar),
+                                        'url' => $discordWebhook->$method($avatar),
                                     );
                                 }
                             }
@@ -253,9 +268,14 @@ if (!class_exists('DiscordWebhook')) {
                             } else {
                                 $query = $db->simple_select("users", "avatar", "uid='{$entry->post_insert_data['uid']}'");
                                 $avatar = $db->fetch_field($query, "avatar");
+                                $avatartype = $db->fetch_field($query, "avatartype");
                                 if (!empty($avatar)) {
+                                    $method = 'getAvatarUrl' . ucfirst($avatartype);
+                                    if (!method_exists($this, $method)) {
+                                        $method = 'getAvatarUrlDefault';
+                                    }
                                     $thumbnail = array(
-                                        'url' => $discordWebhook->getFullUrl($avatar),
+                                        'url' => $discordWebhook->$method($avatar),
                                     );
                                 }
                             }
