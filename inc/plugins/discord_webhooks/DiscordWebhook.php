@@ -25,20 +25,22 @@ if (!class_exists('DiscordWebhook')) {
     class DiscordWebhook {
 
         protected $endpointURL = null;
+        protected $mybb = null;
 
         protected function __construct($mybb, $fid, $suffix = '') {
-            if (!$mybb->settings['discord_webhooks'.$suffix.'_enabled'] || empty($mybb->settings['discord_webhooks'.$suffix.'_forums'])) {
+            $this->mybb = $mybb;
+            if (!$mybb->settings['discord_webhooks' . $suffix . '_enabled'] || empty($mybb->settings['discord_webhooks' . $suffix . '_forums'])) {
                 throw new Exception('Plugin is not enabled');
             }
-            $fids = explode(',', $mybb->settings['discord_webhooks'.$suffix.'_forums']);
-            $ignoredfids = explode(',', $mybb->settings['discord_webhooks'.$suffix.'_ignored_forums']);
-            if ((!in_array($fid, $fids) && $mybb->settings['discord_webhooks'.$suffix.'_forums'] != -1) || (in_array($fid, $ignoredfids)) || $mybb->settings['discord_webhooks'.$suffix.'_ignored_forums'] == -1) {
+            $fids = explode(',', $mybb->settings['discord_webhooks' . $suffix . '_forums']);
+            $ignoredfids = explode(',', $mybb->settings['discord_webhooks' . $suffix . '_ignored_forums']);
+            if ((!in_array($fid, $fids) && $mybb->settings['discord_webhooks' . $suffix . '_forums'] != -1) || (in_array($fid, $ignoredfids)) || $mybb->settings['discord_webhooks' . $suffix . '_ignored_forums'] == -1) {
                 throw new Exception('Board is not enabled');
             }
-            if (preg_match('/^\s*https?:\/\/(ptb\.)?discordapp\.com\/api\/webhooks\//i', $mybb->settings['discord_webhooks'.$suffix.'_url']) == 0) {
+            if (preg_match('/^\s*https?:\/\/(ptb\.)?discordapp\.com\/api\/webhooks\//i', $mybb->settings['discord_webhooks' . $suffix . '_url']) == 0) {
                 throw new Exception('Invalid Discord Webhook URL');
             }
-            $this->endpointURL = $mybb->settings['discord_webhooks'.$suffix.'_url'];
+            $this->endpointURL = $mybb->settings['discord_webhooks' . $suffix . '_url'];
         }
 
         protected function send($username, $message, $avatar = null, $embeds = null, $tts = false) {
@@ -72,11 +74,14 @@ if (!class_exists('DiscordWebhook')) {
         }
 
         protected function getFullUrl($uri) {
-            $proto = 'http://';
-            if ($_SERVER["https"] == "on" || $_SERVER["https"] == 1 || $_SERVER['SERVER_PORT'] == 443) {
-                $proto = 'https://';
-            }
-            $ret = $proto . $_SERVER['HTTP_HOST'] . $uri;
+            /* $proto = 'http://';
+              if ($_SERVER["https"] == "on" || $_SERVER["https"] == 1 || $_SERVER['SERVER_PORT'] == 443) {
+              $proto = 'https://';
+              }
+              $ret = $proto . $_SERVER['HTTP_HOST'] . $uri;
+             * 
+             */
+            $ret = $this->mybb->settings['bburl'] . "/" . $uri;
             return $ret;
         }
 
@@ -145,7 +150,7 @@ if (!class_exists('DiscordWebhook')) {
                             'posttitle' => $entry->post_insert_data['subject'],
                             'threadtitle' => $entry->post_insert_data['subject'],
                             'boardname' => '',
-                            'url' => $discordWebhook->getFullUrl('/showthread.php?tid=' . $entry->post_insert_data['tid']),
+                            'url' => $discordWebhook->getFullUrl(get_thread_link($entry->post_insert_data['tid'])),
                         ];
                         $message = $mybb->settings['discord_webhooks' . $suffix . '_new_thread_message'];
                         if (empty($message)) {
@@ -218,7 +223,7 @@ if (!class_exists('DiscordWebhook')) {
                             'posttitle' => $entry->post_insert_data['subject'],
                             'threadtitle' => '',
                             'boardname' => '',
-                            'url' => $discordWebhook->getFullUrl('/showthread.php?tid=' . $entry->post_insert_data['tid'] . '&pid=' . $entry->return_values['pid'] . '#pid' . $entry->return_values['pid']),
+                            'url' => $discordWebhook->getFullUrl(get_post_link($entry->return_values['pid'], $entry->post_insert_data['tid'])),
                         ];
                         $message = $mybb->settings['discord_webhooks' . $suffix . '_new_post_message'];
                         if (empty($message)) {
@@ -283,9 +288,9 @@ if (!class_exists('DiscordWebhook')) {
         static public function __callStatic($name, $arguments) {
             $reflection = new ReflectionClass('DiscordWebhook');
             $staticMethods = $reflection->getMethods(ReflectionMethod::IS_STATIC | ReflectionMethod::IS_PUBLIC);
-            foreach($staticMethods as $method){
+            foreach ($staticMethods as $method) {
                 $staticMethod = $method->getName();
-                if(preg_match('/^'.preg_quote($staticMethod, '/').'(.*)$/', $name, $o) > 0){
+                if (preg_match('/^' . preg_quote($staticMethod, '/') . '(.*)$/', $name, $o) > 0) {
                     self::$staticMethod($arguments[0], $o[1]);
                     break;
                 }
