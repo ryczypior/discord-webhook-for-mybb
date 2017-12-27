@@ -37,6 +37,10 @@ if (!class_exists('DiscordWebhook')) {
             if ((!in_array($fid, $fids) && $mybb->settings['discord_webhooks' . $suffix . '_forums'] != -1) || (in_array($fid, $ignoredfids)) || $mybb->settings['discord_webhooks' . $suffix . '_ignored_forums'] == -1) {
                 throw new Exception('Board is not enabled');
             }
+            $is_member = is_member($mybb->settings['discord_webhooks' . $suffix . '_ignored_usergroups']);
+            if (!empty($is_member)) {
+                throw new Exception('User belongs to disabled usergroup');
+            }
             if (preg_match('/^\s*https?:\/\/(ptb\.)?discordapp\.com\/api\/webhooks\//i', $mybb->settings['discord_webhooks' . $suffix . '_url']) == 0) {
                 throw new Exception('Invalid Discord Webhook URL');
             }
@@ -305,7 +309,7 @@ if (!class_exists('DiscordWebhook')) {
                                   $avatar = $discordWebhook->$method($avatar);
                                  * 
                                  */
-                                if($avatartype === 'upload'){
+                                if ($avatartype === 'upload') {
                                     $avatar = $discordWebhook->getAvatarUrlUpload($avatar);
                                 } else {
                                     $avatar = $discordWebhook->getAvatarUrlDefault($avatar);

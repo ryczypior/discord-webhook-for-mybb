@@ -50,6 +50,8 @@ $l['discord_webhooks_new_thread_color_description'] = 'You have to use RGB color
 
 $l['discord_webhooks_ignored_forums'] = 'Ignored boards';
 $l['discord_webhooks_ignored_forums_description'] = 'Boards from which threads and/or posts are ignored';
+$l['discord_webhooks_ignored_usergroups'] = 'Ignored usergroups';
+$l['discord_webhooks_ignored_usergroups_description'] = 'Usergroups which threads and/or posts are ignored';
 $l['discord_webhooks_new_thread_enabled'] = 'Push information about new threads';
 $l['discord_webhooks_new_thread_enabled_description'] = 'Do you want to show information about new threads?';
 $l['discord_webhooks_new_post_enabled'] = 'Push information about new posts';
