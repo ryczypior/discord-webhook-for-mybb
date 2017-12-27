@@ -50,7 +50,7 @@ if (!class_exists('DiscordWebhook')) {
                 'content' => $message,
                 'embeds' => $embeds,
                 'tts' => $tts,
-            ), JSON_NUMERIC_CHECK);
+                    ), JSON_NUMERIC_CHECK);
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $this->endpointURL);
             curl_setopt($ch, CURLOPT_POST, true);
@@ -197,11 +197,18 @@ if (!class_exists('DiscordWebhook')) {
                             $avatar = $result['avatar'];
                             $avatartype = $result['avatartype'];
                             if (!empty($avatar)) {
-                                $method = 'getAvatarUrl' . ucfirst($avatartype);
-                                if (!method_exists($this, $method)) {
-                                    $method = 'getAvatarUrlDefault';
+                                /*
+                                 * $method = 'getAvatarUrl' . ucfirst($avatartype);
+                                  if (!method_exists($this, $method)) {
+                                  $method = 'getAvatarUrlDefault';
+                                  }
+                                  $avatar = $discordWebhook->$method($avatar);
+                                 */
+                                if ($avatartype === 'upload') {
+                                    $avatar = $discordWebhook->getAvatarUrlUpload($avatar);
+                                } else {
+                                    $avatar = $discordWebhook->getAvatarUrlDefault($avatar);
                                 }
-                                $avatar = $discordWebhook->$method($avatar);
                             } else {
                                 $avatar = '';
                             }
@@ -227,7 +234,7 @@ if (!class_exists('DiscordWebhook')) {
                                     'author' => array(
                                         'name' => $entry->post_insert_data['username'],
                                         'url' => $discordWebhook->getFullUrl('/member.php?action=profile&uid=' . $entry->post_insert_data['uid']),
-                                        'icon_url' => '',//$avatar
+                                        'icon_url' => '', //$avatar
                                     ),
                                     'thumbnail' => $thumbnail,
                                 ),
@@ -290,11 +297,19 @@ if (!class_exists('DiscordWebhook')) {
                             $avatar = $result['avatar'];
                             $avatartype = $result['avatartype'];
                             if (!empty($avatar)) {
-                                $method = 'getAvatarUrl' . ucfirst($avatartype);
-                                if (!method_exists($this, $method)) {
-                                    $method = 'getAvatarUrlDefault';
+                                /*
+                                 * $method = 'getAvatarUrl' . ucfirst($avatartype);
+                                  if (!method_exists($this, $method)) {
+                                  $method = 'getAvatarUrlDefault';
+                                  }
+                                  $avatar = $discordWebhook->$method($avatar);
+                                 * 
+                                 */
+                                if($avatartype === 'upload'){
+                                    $avatar = $discordWebhook->getAvatarUrlUpload($avatar);
+                                } else {
+                                    $avatar = $discordWebhook->getAvatarUrlDefault($avatar);
                                 }
-                                $avatar = $discordWebhook->$method($avatar);
                             } else {
                                 $avatar = '';
                             }
@@ -320,7 +335,7 @@ if (!class_exists('DiscordWebhook')) {
                                     'author' => array(
                                         'name' => $entry->post_insert_data['username'],
                                         'url' => $discordWebhook->getFullUrl('/member.php?action=profile&uid=' . $entry->post_insert_data['uid']),
-                                        'icon_url' => '',//$avatar
+                                        'icon_url' => '', //$avatar
                                     ),
                                     'thumbnail' => $thumbnail,
                                 ),
