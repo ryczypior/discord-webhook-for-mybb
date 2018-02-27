@@ -85,7 +85,7 @@ if (!class_exists('DiscordWebhook')) {
               $ret = $proto . $_SERVER['HTTP_HOST'] . $uri;
              * 
              */
-            $ret = $this->mybb->settings['bburl'] . "/" . $uri;
+            $ret = $this->mybb->settings['bburl'] . "/" . str_replace('&amp;', '&', $uri);
             return $ret;
         }
 
@@ -154,6 +154,25 @@ if (!class_exists('DiscordWebhook')) {
             $color = trim(str_replace('#', '', $color));
             return hexdec($color);
         }
+        
+        protected function getReplaceTable($uid){
+            global $mybb, $db, $lang;
+            $replace = [];
+            $query = $db->simple_select("userfields", "*", "ufid='{$uid}'");
+            $result = $db->fetch_array($query);
+            if(!empty($result)){
+                foreach($result as $k => $v){
+                    if(preg_match('/^fid.+/', $k)){
+                        $replace[$k] = $v;
+                    }
+                }
+            }
+            $query = $db->simple_select("profilefields", "fid, name");
+            while($result = $db->fetch_array($query)){
+                $replace['@'.$result['name']] = $replace['fid'.$result['fid']];
+            }
+            return $replace;
+        }
 
         static public function newThread($entry, $suffix = '') {
             global $mybb, $db, $lang;
@@ -167,14 +186,17 @@ if (!class_exists('DiscordWebhook')) {
                 try {
                     if ($entry->return_values['visible'] == 1) {
                         $discordWebhook = new self($mybb, $entry->data['fid'], $suffix);
+                        $botname = $mybb->settings['discord_webhooks' . $suffix . '_botname'];
                         $url = '';
-                        $replace = [
+                        $query = $db->simple_select("users", "*", "uid='{$entry->post_insert_data['uid']}'");
+                        $replace = $user = $db->fetch_array($query);
+                        $replace = array_merge($replace, $discordWebhook->getReplaceTable($entry->post_insert_data['uid']), [
                             'username' => $entry->post_insert_data['username'],
                             'posttitle' => $entry->post_insert_data['subject'],
                             'threadtitle' => $entry->post_insert_data['subject'],
                             'boardname' => '',
                             'url' => $discordWebhook->getFullUrl(get_thread_link($entry->post_insert_data['tid'])),
-                        ];
+                        ]);
                         $message = $mybb->settings['discord_webhooks' . $suffix . '_new_thread_message'];
                         if (empty($message)) {
                             $message = $lang->discord_webhooks_new_thread_message_value;
@@ -183,11 +205,13 @@ if (!class_exists('DiscordWebhook')) {
                             $query = $db->simple_select("forums", "name", "fid='{$entry->post_insert_data['fid']}'");
                             $replace['boardname'] = $db->fetch_field($query, "name");
                         }
-                        $replace['threadtitle'] = $entry->thread_insert_data['subject'];
-                        $replace['posttitle'] = $entry->post_insert_data['subject'];
+                        $replace['threadtitle'] = str_replace(['{', '}'],['\\{', '\\}'], $entry->thread_insert_data['subject']);
+                        $replace['posttitle'] = str_replace(['{', '}'],['\\{', '\\}'], $entry->post_insert_data['subject']);
                         foreach ($replace as $from => $to) {
                             $message = str_replace('{' . $from . '}', $to, $message);
+                            $botname = str_replace('{' . $from . '}', $to, $botname);
                         }
+                        $message = str_replace(['\\{', '\\}'],['{', '}'], $message);
                         $message = $discordWebhook->rn($message);
 
                         $embeds = null;
@@ -196,10 +220,8 @@ if (!class_exists('DiscordWebhook')) {
                             $title = $entry->post_insert_data['subject'];
                             $url = $replace['url'];
                             $msg = $discordWebhook->formatMessage($entry->post_insert_data['message']);
-                            $query = $db->simple_select("users", "avatar, avatartype", "uid='{$entry->post_insert_data['uid']}'");
-                            $result = $db->fetch_array($query);
-                            $avatar = $result['avatar'];
-                            $avatartype = $result['avatartype'];
+                            $avatar = $user['avatar'];
+                            $avatartype = $user['avatartype'];
                             if (!empty($avatar)) {
                                 /*
                                  * $method = 'getAvatarUrl' . ucfirst($avatartype);
@@ -237,14 +259,14 @@ if (!class_exists('DiscordWebhook')) {
                                     'color' => $color,
                                     'author' => array(
                                         'name' => $entry->post_insert_data['username'],
-                                        'url' => $discordWebhook->getFullUrl('/member.php?action=profile&uid=' . $entry->post_insert_data['uid']),
+                                        'url' => $discordWebhook->getFullUrl('member.php?action=profile&uid=' . $entry->post_insert_data['uid']),
                                         'icon_url' => '', //$avatar
                                     ),
                                     'thumbnail' => $thumbnail,
                                 ),
                             );
                         }
-                        $discordWebhook->send($mybb->settings['discord_webhooks' . $suffix . '_botname'], $message, null, $embeds);
+                        $discordWebhook->send($botname, $message, null, $embeds);
                     }
                 } catch (Exception $ex) {
                     
@@ -263,15 +285,18 @@ if (!class_exists('DiscordWebhook')) {
                 require_once MYBB_ROOT . "inc/class_parser.php";
                 try {
                     if ($entry->return_values['visible'] == 1) {
+                        $botname = $mybb->settings['discord_webhooks' . $suffix . '_botname'];
                         $discordWebhook = new self($mybb, $entry->data['fid'], $suffix);
                         $url = '';
-                        $replace = [
+                        $query = $db->simple_select("users", "*", "uid='{$entry->post_insert_data['uid']}'");
+                        $replace = $user = $db->fetch_array($query);
+                        $replace = array_merge($replace, $discordWebhook->getReplaceTable($entry->post_insert_data['uid']), [
                             'username' => $entry->post_insert_data['username'],
                             'posttitle' => $entry->post_insert_data['subject'],
-                            'threadtitle' => '',
+                            'threadtitle' => $entry->post_insert_data['subject'],
                             'boardname' => '',
-                            'url' => $discordWebhook->getFullUrl(get_post_link($entry->return_values['pid'], $entry->post_insert_data['tid'])) . "#pid" . $entry->return_values['pid'],
-                        ];
+                            'url' => $discordWebhook->getFullUrl(get_thread_link($entry->post_insert_data['tid'])),
+                        ]);
                         $message = $mybb->settings['discord_webhooks' . $suffix . '_new_post_message'];
                         if (empty($message)) {
                             $message = $lang->discord_webhooks_new_post_message_value;
@@ -284,10 +309,13 @@ if (!class_exists('DiscordWebhook')) {
                             $query = $db->simple_select("threads", "subject", "tid='{$entry->post_insert_data['tid']}'");
                             $replace['threadtitle'] = $db->fetch_field($query, "subject");
                         }
-                        $replace['posttitle'] = $entry->post_insert_data['subject'];
+                        $replace['threadtitle'] = str_replace(['{', '}'],['\\{', '\\}'], $replace['threadtitle']);
+                        $replace['posttitle'] = str_replace(['{', '}'],['\\{', '\\}'], $entry->post_insert_data['subject']);
                         foreach ($replace as $from => $to) {
                             $message = str_replace('{' . $from . '}', $to, $message);
+                            $botname = str_replace('{' . $from . '}', $to, $botname);
                         }
+                        $message = str_replace(['\\{', '\\}'],['{', '}'], $message);
                         $message = $discordWebhook->rn($message);
 
                         $embeds = null;
@@ -296,10 +324,8 @@ if (!class_exists('DiscordWebhook')) {
                             $title = $entry->post_insert_data['subject'];
                             $url = $replace['url'];
                             $msg = $discordWebhook->formatMessage($entry->post_insert_data['message']);
-                            $query = $db->simple_select("users", "avatar, avatartype", "uid='{$entry->post_insert_data['uid']}'");
-                            $result = $db->fetch_array($query);
-                            $avatar = $result['avatar'];
-                            $avatartype = $result['avatartype'];
+                            $avatar = $user['avatar'];
+                            $avatartype = $user['avatartype'];
                             if (!empty($avatar)) {
                                 /*
                                  * $method = 'getAvatarUrl' . ucfirst($avatartype);
@@ -338,14 +364,14 @@ if (!class_exists('DiscordWebhook')) {
                                     'color' => $color,
                                     'author' => array(
                                         'name' => $entry->post_insert_data['username'],
-                                        'url' => $discordWebhook->getFullUrl('/member.php?action=profile&uid=' . $entry->post_insert_data['uid']),
+                                        'url' => $discordWebhook->getFullUrl('member.php?action=profile&uid=' . $entry->post_insert_data['uid']),
                                         'icon_url' => '', //$avatar
                                     ),
                                     'thumbnail' => $thumbnail,
                                 ),
                             );
                         }
-                        $discordWebhook->send($mybb->settings['discord_webhooks' . $suffix . '_botname'], $message, null, $embeds);
+                        $discordWebhook->send($botname, $message, null, $embeds);
                     }
                 } catch (Exception $ex) {
                     
