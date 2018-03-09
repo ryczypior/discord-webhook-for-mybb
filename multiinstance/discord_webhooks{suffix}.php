@@ -40,7 +40,7 @@ function discord_webhooks{suffix}_info() {
         "website" => "https://github.com/ryczypior/discord-webhook-for-mybb",
         "author" => "Ryczypiór",
         "authorsite" => "https://www.github.com/ryczypior",
-        "version" => "1.1",
+        "version" => "1.11",
         "compatibility" => "18*",
         "guid" => "",
         "language_file" => "discord_webhooks",
@@ -59,6 +59,7 @@ function discord_webhooks{suffix}_install() {
         'description' => $db->escape_string($lang->discord_webhook_settinggroups_description) . ('{suffix}' != '' ? ' (Suffix: {suffix})' : ''),
             ));
     $position = 1;
+    $has_curl = function_exists('curl_exec');
     $cfg = array(
         array(
             'name' => 'discord_webhooks{suffix}_enabled',
@@ -76,6 +77,16 @@ function discord_webhooks{suffix}_install() {
             'description' => $db->escape_string($lang->discord_webhooks_url_description),
             'optionscode' => 'text',
             'value' => 'https://',
+            'isdefault' => 1,
+            'disporder' =>$position++,
+            'gid' => $gid,
+        ),
+        array(
+            'name' => 'discord_webhooks{suffix}_usesocket',
+            'title' => $db->escape_string($lang->discord_webhooks_usesocket),
+            'description' => $db->escape_string($lang->discord_webhooks_usesocket_description),
+            'optionscode' => 'yesno',
+            'value' => ($has_curl ? '0' : '1'),
             'isdefault' => 1,
             'disporder' =>$position++,
             'gid' => $gid,

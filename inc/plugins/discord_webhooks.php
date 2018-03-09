@@ -40,7 +40,7 @@ function discord_webhooks_info() {
         "website" => "https://github.com/ryczypior/discord-webhook-for-mybb",
         "author" => "Ryczypiór",
         "authorsite" => "https://www.github.com/ryczypior",
-        "version" => "1.1",
+        "version" => "1.11",
         "compatibility" => "18*",
         "guid" => "",
         "language_file" => "discord_webhooks",
@@ -59,6 +59,7 @@ function discord_webhooks_install() {
         'description' => $db->escape_string($lang->discord_webhook_settinggroups_description),
             ));
     $position = 1;
+    $has_curl = function_exists('curl_exec');
     $cfg = array(
         array(
             'name' => 'discord_webhooks_enabled',
@@ -76,6 +77,16 @@ function discord_webhooks_install() {
             'description' => $db->escape_string($lang->discord_webhooks_url_description),
             'optionscode' => 'text',
             'value' => 'https://',
+            'isdefault' => 1,
+            'disporder' =>$position++,
+            'gid' => $gid,
+        ),
+        array(
+            'name' => 'discord_webhooks_usesocket',
+            'title' => $db->escape_string($lang->discord_webhooks_usesocket),
+            'description' => $db->escape_string($lang->discord_webhooks_usesocket_description),
+            'optionscode' => 'yesno',
+            'value' => ($has_curl ? '0' : '1'),
             'isdefault' => 1,
             'disporder' =>$position++,
             'gid' => $gid,
@@ -200,11 +211,13 @@ function discord_webhooks_install() {
 function discord_webhooks_activate() {
     global $db;
     $db->update_query("settings", array('value' => 1), "name='discord_webhooks_enabled'");
+    rebuild_settings();
 }
 
 function discord_webhooks_deactivate() {
     global $db;
     $db->update_query("settings", array('value' => 0), "name='discord_webhooks_enabled'");
+    rebuild_settings();
 }
 
 function discord_webhooks_is_installed() {

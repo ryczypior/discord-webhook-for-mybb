@@ -73,7 +73,7 @@ Requirements:
 =============
 
 * MyBB 1.8+
-* curl - for HTTP requests to Discord
+* ~curl - for HTTP requests to Discord~
 * Multibyte String (mb_* string) for multibyte string manipulation
 
 GitHub: https://github.com/ryczypior/discord-webhook-for-mybb
