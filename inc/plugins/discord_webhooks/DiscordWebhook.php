@@ -226,14 +226,19 @@ if (!class_exists('DiscordWebhook')) {
                             'posttitle' => $entry->post_insert_data['subject'],
                             'threadtitle' => $entry->post_insert_data['subject'],
                             'boardname' => '',
-                            'url' => $discordWebhook->getFullUrl(get_thread_link($entry->post_insert_data['tid'])),
+                            'url' => $discordWebhook->getFullUrl(get_thread_link($entry->return_values['tid'])),
                         ]);
                         $message = $mybb->settings['discord_webhooks' . $suffix . '_new_thread_message'];
                         if (empty($message)) {
                             $message = $lang->discord_webhooks_new_thread_message_value;
                         }
-                        if ($entry->post_insert_data['fid'] > 0) {
-                            $query = $db->simple_select("forums", "name", "fid='{$entry->post_insert_data['fid']}'");
+                        $thread = array();
+                        if ($entry->return_values['tid'] > 0) {
+                            $query = $db->simple_select("threads", "*", "tid='{$entry->return_values['tid']}'");
+                            $thread = $db->fetch_array($query);
+                        }
+                        if ($thread['fid'] > 0) {
+                            $query = $db->simple_select("forums", "name", "fid='{$thread['fid']}'");
                             $replace['boardname'] = $db->fetch_field($query, "name");
                         }
                         $replace['threadtitle'] = str_replace(['{', '}'], ['\\{', '\\}'], $entry->thread_insert_data['subject']);
@@ -325,31 +330,36 @@ if (!class_exists('DiscordWebhook')) {
                         $url = '';
                         $replace = [];
                         $user = null;
-                        if (!empty($entry->post_insert_data['uid'])) {
-                            $query = $db->simple_select("users", "*", "uid='{$entry->post_insert_data['uid']}'");
+                        $post = array();
+                        if (!empty($entry->return_values['pid'])) {
+                            $query = $db->simple_select("posts", "*", "pid='{$entry->return_values['pid']}'");
+                            $post = $user = $db->fetch_array($query);
+                        }
+                        if (!empty($post['uid'])) {
+                            $query = $db->simple_select("users", "*", "uid='{$post['uid']}'");
                             $replace = $user = $db->fetch_array($query);
                         }
-                        $replace = array_merge($replace, $discordWebhook->getReplaceTable($entry->post_insert_data['uid']), [
-                            'username' => $entry->post_insert_data['username'],
-                            'posttitle' => $entry->post_insert_data['subject'],
+                        $replace = array_merge($replace, $discordWebhook->getReplaceTable($post['uid']), [
+                            'username' => (!empty($user) ? $user['username'] : $entry->post_insert_data['username']),
+                            'posttitle' => $post['subject'],
                             'threadtitle' => $entry->post_insert_data['subject'],
                             'boardname' => '',
-                            'url' => $discordWebhook->getFullUrl(get_thread_link($entry->post_insert_data['tid'])),
+                            'url' => $discordWebhook->getFullUrl(get_post_link($post['pid'], $post['tid']).'#pid'.$post['pid']),
                         ]);
                         $message = $mybb->settings['discord_webhooks' . $suffix . '_new_post_message'];
                         if (empty($message)) {
                             $message = $lang->discord_webhooks_new_post_message_value;
                         }
-                        if ($entry->post_insert_data['fid'] > 0) {
-                            $query = $db->simple_select("forums", "name", "fid='{$entry->post_insert_data['fid']}'");
+                        if ($post['fid'] > 0) {
+                            $query = $db->simple_select("forums", "name", "fid='{$post['fid']}'");
                             $replace['boardname'] = $db->fetch_field($query, "name");
                         }
-                        if ($entry->post_insert_data['tid'] > 0) {
-                            $query = $db->simple_select("threads", "subject", "tid='{$entry->post_insert_data['tid']}'");
+                        if ($post['tid'] > 0) {
+                            $query = $db->simple_select("threads", "subject", "tid='{$post['tid']}'");
                             $replace['threadtitle'] = $db->fetch_field($query, "subject");
                         }
                         $replace['threadtitle'] = str_replace(['{', '}'], ['\\{', '\\}'], $replace['threadtitle']);
-                        $replace['posttitle'] = str_replace(['{', '}'], ['\\{', '\\}'], $entry->post_insert_data['subject']);
+                        $replace['posttitle'] = str_replace(['{', '}'], ['\\{', '\\}'], $replace['posttitle']);
                         foreach ($replace as $from => $to) {
                             $message = str_replace('{' . $from . '}', $to, $message);
                             $botname = str_replace('{' . $from . '}', $to, $botname);

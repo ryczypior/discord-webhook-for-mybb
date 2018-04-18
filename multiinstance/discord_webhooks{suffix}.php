@@ -40,7 +40,7 @@ function discord_webhooks{suffix}_info() {
         "website" => "https://github.com/ryczypior/discord-webhook-for-mybb",
         "author" => "Ryczypiór",
         "authorsite" => "https://www.github.com/ryczypior",
-        "version" => "1.11",
+        "version" => "1.12",
         "compatibility" => "18*",
         "guid" => "",
         "language_file" => "discord_webhooks",
