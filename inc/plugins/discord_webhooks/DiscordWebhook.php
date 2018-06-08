@@ -2,49 +2,43 @@
 
 /**
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2017 Łukasz Kodzis (Ryczypiór)
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
- * and associated documentation files (the "Software"), to deal in the Software without restriction, 
- * including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, 
+ * and associated documentation files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all copies or substantial 
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial
  * portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+require_once __DIR__ . '/curl_checker.php';
 if (!class_exists('DiscordWebhook')) {
 
     class DiscordWebhook {
 
         protected $endpointURL = null;
         protected $mybb = null;
+        protected $suffix = '';
 
-        protected function __construct($mybb, $fid, $suffix = '') {
+        protected function __construct($mybb, $suffix = '', $webhookurl = null) {
             $this->mybb = $mybb;
-            if (!$mybb->settings['discord_webhooks' . $suffix . '_enabled'] || empty($mybb->settings['discord_webhooks' . $suffix . '_forums'])) {
-                throw new Exception('Plugin is not enabled');
+            $this->suffix = $suffix;
+            if (empty($webhookurl)) {
+                $webhookurl = $mybb->settings['discord_webhooks' . $suffix . '_url'];
             }
-            $fids = explode(',', $mybb->settings['discord_webhooks' . $suffix . '_forums']);
-            $ignoredfids = explode(',', $mybb->settings['discord_webhooks' . $suffix . '_ignored_forums']);
-            if ((!in_array($fid, $fids) && $mybb->settings['discord_webhooks' . $suffix . '_forums'] != -1) || (in_array($fid, $ignoredfids)) || $mybb->settings['discord_webhooks' . $suffix . '_ignored_forums'] == -1) {
-                throw new Exception('Board is not enabled');
-            }
-            $is_member = is_member($mybb->settings['discord_webhooks' . $suffix . '_ignored_usergroups']);
-            if (!empty($is_member)) {
-                throw new Exception('User belongs to disabled usergroup');
-            }
-            if (preg_match('/^\s*https?:\/\/(ptb\.)?discordapp\.com\/api\/webhooks\//i', $mybb->settings['discord_webhooks' . $suffix . '_url']) == 0) {
+            if (preg_match('/^\s*https?:\/\/(ptb\.)?discordapp\.com\/api\/webhooks\//i', $webhookurl) == 0) {
                 throw new Exception('Invalid Discord Webhook URL');
             }
-            $this->endpointURL = $mybb->settings['discord_webhooks' . $suffix . '_url'];
+            $this->endpointURL = $webhookurl;
         }
 
         private function sendCURL($message, $webhook) {
@@ -95,8 +89,8 @@ if (!class_exists('DiscordWebhook')) {
                 'content' => $message,
                 'embeds' => $embeds,
                 'tts' => $tts,
-                    ), JSON_NUMERIC_CHECK);
-            if ($mybb->settings['discord_webhooks' . $suffix . '_usesocket']) {
+            ), JSON_NUMERIC_CHECK);
+            if ($this->mybb->settings['discord_webhooks' . $this->suffix . '_usesocket'] || defined('DISCORD_WEBHOOK_FORCE_SOCKETS')) {
                 $this->sendSocket($push, $this->endpointURL);
             } else {
                 $this->sendCURL($push, $this->endpointURL);
@@ -202,18 +196,29 @@ if (!class_exists('DiscordWebhook')) {
         }
 
         static public function newThread($entry, $suffix = '') {
-            global $mybb, $db, $lang;
-            if ($mybb->settings['discord_webhooks' . $suffix . '_new_thread_enabled']) {
-                $lang->load('discord_webhooks');
+            global $mybb, $db;
+            if ($mybb->settings['discord_webhooks' . $suffix . '_new_thread_enabled'] && $mybb->settings['discord_webhooks' . $suffix . '_enabled']) {
                 $color = $mybb->settings['discord_webhooks' . $suffix . '_new_thread_color'];
                 if (empty($color)) {
                     $color = '#aaaaaa';
                 }
-                //require_once MYBB_ROOT . "inc/class_parser.php";
+                $webhookurl = null;
                 try {
                     if ($entry->return_values['visible'] == 1) {
-                        $discordWebhook = new self($mybb, $entry->data['fid'], $suffix);
+                        $fids = explode(',', $mybb->settings['discord_webhooks' . $suffix . '_forums']);
+                        $ignoredfids = explode(',', $mybb->settings['discord_webhooks' . $suffix . '_ignored_forums']);
+                        if ((!in_array($entry->data['fid'], $fids) && $mybb->settings['discord_webhooks' . $suffix . '_forums'] != -1) || (in_array($entry->data['fid'], $ignoredfids)) || empty($mybb->settings['discord_webhooks' . $suffix . '_forums']) || $mybb->settings['discord_webhooks' . $suffix . '_ignored_forums'] == -1) {
+                            throw new Exception('Board is not enabled');
+                        }
+                        $is_member = is_member($mybb->settings['discord_webhooks' . $suffix . '_ignored_usergroups']);
+                        if (!empty($is_member)) {
+                            throw new Exception('User belongs to disabled usergroup');
+                        }
+                        $discordWebhook = new self($mybb, $suffix, $mybb->settings['discord_webhooks' . $suffix . '_new_thread_url']);
                         $botname = $mybb->settings['discord_webhooks' . $suffix . '_botname'];
+                        if (!empty($mybb->settings['discord_webhooks' . $suffix . '_new_thread_botname'])) {
+                            $botname = $mybb->settings['discord_webhooks' . $suffix . '_new_thread_botname'];
+                        }
                         $url = '';
                         $replace = [];
                         $user = null;
@@ -229,9 +234,6 @@ if (!class_exists('DiscordWebhook')) {
                             'url' => $discordWebhook->getFullUrl(get_thread_link($entry->return_values['tid'])),
                         ]);
                         $message = $mybb->settings['discord_webhooks' . $suffix . '_new_thread_message'];
-                        if (empty($message)) {
-                            $message = $lang->discord_webhooks_new_thread_message_value;
-                        }
                         $thread = array();
                         if ($entry->return_values['tid'] > 0) {
                             $query = $db->simple_select("threads", "*", "tid='{$entry->return_values['tid']}'");
@@ -241,6 +243,18 @@ if (!class_exists('DiscordWebhook')) {
                             $query = $db->simple_select("forums", "name", "fid='{$thread['fid']}'");
                             $replace['boardname'] = $db->fetch_field($query, "name");
                         }
+                        $prefixes = array_map('trim', explode(',', trim($mybb->settings['discord_webhooks' . $suffix . '_new_thread_prefix'])));
+                        if (!empty($prefixes) && !empty($prefixes[0])) {
+                            if ($thread['prefix'] > 0) {
+                                $query = $db->simple_select("threadprefixes", "prefix", "pid='{$thread['prefix']}'");
+                                $prefix = $db->fetch_field($query, "prefix");
+                                if (!in_array($prefix, $prefixes)) {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        }
                         $replace['threadtitle'] = str_replace(['{', '}'], ['\\{', '\\}'], $entry->thread_insert_data['subject']);
                         $replace['posttitle'] = str_replace(['{', '}'], ['\\{', '\\}'], $entry->post_insert_data['subject']);
                         foreach ($replace as $from => $to) {
@@ -249,75 +263,100 @@ if (!class_exists('DiscordWebhook')) {
                         }
                         $message = str_replace(['\\{', '\\}'], ['{', '}'], $message);
                         $message = $discordWebhook->rn($message);
-
                         $embeds = null;
-                        if (!empty($mybb->settings['discord_webhooks' . $suffix . '_show'])) {
+                        $botavatar = null;
+                        $avatar = '';
+                        if (!empty($user)) {
+                            $author['url'] = $discordWebhook->getFullUrl('member.php?action=profile&uid=' . $entry->post_insert_data['uid']);
+                            $avatar = $user['avatar'];
+                            $avatartype = $user['avatartype'];
+                            if (!empty($avatar)) {
+                                if ($avatartype === 'upload') {
+                                    $avatar = $discordWebhook->getAvatarUrlUpload($avatar);
+                                } else {
+                                    $avatar = $discordWebhook->getAvatarUrlDefault($avatar);
+                                }
+                            } else {
+                                $avatar = '';
+                            }
+                        }
+                        if (!empty($avatar) && $mybb->settings['discord_webhooks' . $suffix . '_new_thread_show_avatar']) {
+                            $botavatar = $avatar;
+                        }
+                        if (in_array($mybb->settings['discord_webhooks' . $suffix . '_show'], array(1, 2, 3))) {
                             $thumbnail = null;
                             $title = $entry->post_insert_data['subject'];
                             $url = $replace['url'];
                             $msg = $discordWebhook->formatMessage($entry->post_insert_data['message']);
+                            if ($mybb->settings['discord_webhooks' . $suffix . '_show'] == 2) {
+                                $msg = $message . "\n\n" . $msg;
+                                $message = null;
+                            } elseif ($mybb->settings['discord_webhooks' . $suffix . '_show'] == 3) {
+                                $message = null;
+                            }
                             $author = array(
                                 'name' => $entry->post_insert_data['username'],
-                                'icon_url' => '', //$avatar
+                                'icon_url' => $avatar
                             );
-                            $avatar = '';
-                            if (!empty($user)) {
-                                $author['url'] = $discordWebhook->getFullUrl('member.php?action=profile&uid=' . $entry->post_insert_data['uid']);
-                                $avatar = $user['avatar'];
-                                $avatartype = $user['avatartype'];
-                                if (!empty($avatar)) {
-                                    /*
-                                     * $method = 'getAvatarUrl' . ucfirst($avatartype);
-                                      if (!method_exists($this, $method)) {
-                                      $method = 'getAvatarUrlDefault';
-                                      }
-                                      $avatar = $discordWebhook->$method($avatar);
-                                     */
-                                    if ($avatartype === 'upload') {
-                                        $avatar = $discordWebhook->getAvatarUrlUpload($avatar);
-                                    } else {
-                                        $avatar = $discordWebhook->getAvatarUrlDefault($avatar);
-                                    }
-                                } else {
-                                    $avatar = '';
-                                }
+                            $limit = (int)$mybb->settings['discord_webhooks' . $suffix . '_new_thread_chars_limit'];
+                            if ($limit > 2000) {
+                                $limit = 2000;
                             }
-                            $limit = 1000;
-                            if ($mybb->settings['discord_webhooks' . $suffix . '_show'] == 1) {
-                                $limit = 100;
-                            } else {
+                            if ($limit <= 0) {
+                                $limit = 2000;
+                            }
+                            if (!empty($avatar)) {
                                 $thumbnail = array(
                                     'url' => $avatar,
                                 );
                             }
                             if (mb_strlen($msg, 'UTF-8') > $limit) {
-                                $msg = mb_strcut($msg, 0, $limit, 'UTF-8') . '...';
+                                $msg = mb_strcut($msg, 0, $limit - 3, 'UTF-8') . '...';
                             }
+                            $color = $discordWebhook->getColorIntFromHex($color);
+                            $eArray = array(
+                                'type' => "rich",
+                                'title' => $title,
+                                'description' => $msg,
+                                'url' => $url,
+                                'color' => $color,
+                                'author' => $author,
+                                'thumbnail' => $thumbnail,
+                            );
+                            if (!$mybb->settings['discord_webhooks' . $suffix . '_new_thread_show_thumbnail']) {
+                                unset($eArray['thumbnail']);
+                            }
+                            if (!$mybb->settings['discord_webhooks' . $suffix . '_new_thread_show_title']) {
+                                unset($eArray['title']);
+                            }
+                            if (!$mybb->settings['discord_webhooks' . $suffix . '_new_thread_show_author']) {
+                                unset($eArray['author']);
+                            }
+                            $embeds = array(
+                                $eArray
+                            );
+                        } else if (in_array($mybb->settings['discord_webhooks' . $suffix . '_show'], array(4))) {
                             $color = $discordWebhook->getColorIntFromHex($color);
                             $embeds = array(
                                 array(
                                     'type' => "rich",
-                                    'title' => $title,
-                                    'description' => $msg,
-                                    'url' => $url,
+                                    'description' => $message,
                                     'color' => $color,
-                                    'author' => $author,
-                                    'thumbnail' => $thumbnail,
                                 ),
                             );
+                            $message = null;
                         }
-                        $discordWebhook->send($botname, $message, null, $embeds);
+                        $discordWebhook->send($botname, $message, $botavatar, $embeds);
                     }
                 } catch (Exception $ex) {
-                    
+
                 }
             }
         }
 
         static public function newPost($entry, $suffix = '') {
-            global $mybb, $db, $lang;
+            global $mybb, $db;
             if ($mybb->settings['discord_webhooks' . $suffix . '_new_post_enabled']) {
-                $lang->load('discord_webhooks');
                 $color = $mybb->settings['discord_webhooks' . $suffix . '_new_post_color'];
                 if (empty($color)) {
                     $color = '#ffffff';
@@ -325,8 +364,22 @@ if (!class_exists('DiscordWebhook')) {
                 require_once MYBB_ROOT . "inc/class_parser.php";
                 try {
                     if ($entry->return_values['visible'] == 1) {
+                        $fids = explode(',', $mybb->settings['discord_webhooks' . $suffix . '_forums']);
+                        $ignoredfids = explode(',', $mybb->settings['discord_webhooks' . $suffix . '_ignored_forums']);
+                        if ((!in_array($entry->data['fid'], $fids) && $mybb->settings['discord_webhooks' . $suffix . '_forums'] != -1) || (in_array($entry->data['fid'], $ignoredfids)) || empty($mybb->settings['discord_webhooks' . $suffix . '_forums']) || $mybb->settings['discord_webhooks' . $suffix . '_ignored_forums'] == -1) {
+                            //throw new Exception('Board is not enabled');
+                            return false;
+                        }
+                        $is_member = is_member($mybb->settings['discord_webhooks' . $suffix . '_ignored_usergroups']);
+                        if (!empty($is_member)) {
+                            //throw new Exception('User belongs to disabled usergroup');
+                            return false;
+                        }
+                        $discordWebhook = new self($mybb, $suffix, $mybb->settings['discord_webhooks' . $suffix . '_new_post_url']);
                         $botname = $mybb->settings['discord_webhooks' . $suffix . '_botname'];
-                        $discordWebhook = new self($mybb, $entry->data['fid'], $suffix);
+                        if (!empty($mybb->settings['discord_webhooks' . $suffix . '_new_post_botname'])) {
+                            $botname = $mybb->settings['discord_webhooks' . $suffix . '_new_post_botname'];
+                        }
                         $url = '';
                         $replace = [];
                         $user = null;
@@ -334,6 +387,24 @@ if (!class_exists('DiscordWebhook')) {
                         if (!empty($entry->return_values['pid'])) {
                             $query = $db->simple_select("posts", "*", "pid='{$entry->return_values['pid']}'");
                             $post = $user = $db->fetch_array($query);
+                        }
+                        $prefixes = array_map('trim', explode(',', trim($mybb->settings['discord_webhooks' . $suffix . '_new_thread_prefix'])));
+                        if (!empty($prefixes) && !empty($prefixes[0])) {
+                            if ($post['tid'] > 0) {
+                                $query = $db->simple_select("threads", "prefix", "tid='{$post['tid']}'");
+                                $prefixid = $db->fetch_field($query, "prefix");
+                                if ($prefixid > 0) {
+                                    $query = $db->simple_select("threadprefixes", "prefix", "pid='{$prefixid}'");
+                                    $prefix = $db->fetch_field($query, "prefix");
+                                    if (!in_array($prefix, $prefixes)) {
+                                        return false;
+                                    }
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
                         }
                         if (!empty($post['uid'])) {
                             $query = $db->simple_select("users", "*", "uid='{$post['uid']}'");
@@ -344,12 +415,9 @@ if (!class_exists('DiscordWebhook')) {
                             'posttitle' => $post['subject'],
                             'threadtitle' => $entry->post_insert_data['subject'],
                             'boardname' => '',
-                            'url' => $discordWebhook->getFullUrl(get_post_link($post['pid'], $post['tid']).'#pid'.$post['pid']),
+                            'url' => $discordWebhook->getFullUrl(get_post_link($post['pid'], $post['tid']) . '#pid' . $post['pid']),
                         ]);
                         $message = $mybb->settings['discord_webhooks' . $suffix . '_new_post_message'];
-                        if (empty($message)) {
-                            $message = $lang->discord_webhooks_new_post_message_value;
-                        }
                         if ($post['fid'] > 0) {
                             $query = $db->simple_select("forums", "name", "fid='{$post['fid']}'");
                             $replace['boardname'] = $db->fetch_field($query, "name");
@@ -366,44 +434,49 @@ if (!class_exists('DiscordWebhook')) {
                         }
                         $message = str_replace(['\\{', '\\}'], ['{', '}'], $message);
                         $message = $discordWebhook->rn($message);
-
+                        $botavatar = null;
+                        $avatar = '';
+                        if (!empty($user)) {
+                            $author['url'] = $discordWebhook->getFullUrl('member.php?action=profile&uid=' . $entry->post_insert_data['uid']);
+                            $avatar = $user['avatar'];
+                            $avatartype = $user['avatartype'];
+                            if (!empty($avatar)) {
+                                if ($avatartype === 'upload') {
+                                    $avatar = $discordWebhook->getAvatarUrlUpload($avatar);
+                                } else {
+                                    $avatar = $discordWebhook->getAvatarUrlDefault($avatar);
+                                }
+                            } else {
+                                $avatar = '';
+                            }
+                        }
+                        if (!empty($avatar) && $mybb->settings['discord_webhooks' . $suffix . '_new_post_show_avatar']) {
+                            $botavatar = $avatar;
+                        }
                         $embeds = null;
-                        if (!empty($mybb->settings['discord_webhooks' . $suffix . '_show'])) {
+                        if (in_array($mybb->settings['discord_webhooks' . $suffix . '_new_post_show'], array(1, 2, 3))) {
                             $thumbnail = null;
                             $title = $entry->post_insert_data['subject'];
                             $url = $replace['url'];
                             $msg = $discordWebhook->formatMessage($entry->post_insert_data['message']);
+                            if ($mybb->settings['discord_webhooks' . $suffix . '_new_post_show'] == 2) {
+                                $msg = $message . "\n\n" . $msg;
+                                $message = null;
+                            } elseif ($mybb->settings['discord_webhooks' . $suffix . '_new_post_show'] == 3) {
+                                $message = null;
+                            }
                             $author = array(
                                 'name' => $entry->post_insert_data['username'],
-                                'icon_url' => '', //$avatar
+                                'icon_url' => $avatar
                             );
-                            $avatar = '';
-                            if (!empty($user)) {
-                                $author['url'] = $discordWebhook->getFullUrl('member.php?action=profile&uid=' . $entry->post_insert_data['uid']);
-                                $avatar = $user['avatar'];
-                                $avatartype = $user['avatartype'];
-                                if (!empty($avatar)) {
-                                    /*
-                                     * $method = 'getAvatarUrl' . ucfirst($avatartype);
-                                      if (!method_exists($this, $method)) {
-                                      $method = 'getAvatarUrlDefault';
-                                      }
-                                      $avatar = $discordWebhook->$method($avatar);
-                                     * 
-                                     */
-                                    if ($avatartype === 'upload') {
-                                        $avatar = $discordWebhook->getAvatarUrlUpload($avatar);
-                                    } else {
-                                        $avatar = $discordWebhook->getAvatarUrlDefault($avatar);
-                                    }
-                                } else {
-                                    $avatar = '';
-                                }
+                            $limit = (int)$mybb->settings['discord_webhooks' . $suffix . '_new_post_chars_limit'];
+                            if ($limit > 2000) {
+                                $limit = 2000;
                             }
-                            $limit = 1000;
-                            if ($mybb->settings['discord_webhooks' . $suffix . '_show'] == 1) {
-                                $limit = 100;
-                            } else {
+                            if ($limit <= 0) {
+                                $limit = 2000;
+                            }
+                            if (!empty($avatar)) {
                                 $thumbnail = array(
                                     'url' => $avatar,
                                 );
@@ -412,22 +485,99 @@ if (!class_exists('DiscordWebhook')) {
                                 $msg = mb_strcut($msg, 0, $limit, 'UTF-8') . '...';
                             }
                             $color = $discordWebhook->getColorIntFromHex($color);
+                            $eArray = array(
+                                'type' => "rich",
+                                'title' => $title,
+                                'description' => $msg,
+                                'url' => $url,
+                                'color' => $color,
+                                'author' => $author,
+                                'thumbnail' => $thumbnail,
+                            );
+                            if (!$mybb->settings['discord_webhooks' . $suffix . '_new_post_show_thumbnail']) {
+                                unset($eArray['thumbnail']);
+                            }
+                            if (!$mybb->settings['discord_webhooks' . $suffix . '_new_post_show_title']) {
+                                unset($eArray['title']);
+                            }
+                            if (!$mybb->settings['discord_webhooks' . $suffix . '_new_post_show_author']) {
+                                unset($eArray['author']);
+                            }
+                            $embeds = array(
+                                $eArray
+                            );
+                        } else if (in_array($mybb->settings['discord_webhooks' . $suffix . '_new_post_show'], array(4))) {
+                            $color = $discordWebhook->getColorIntFromHex($color);
                             $embeds = array(
                                 array(
                                     'type' => "rich",
-                                    'title' => $title,
-                                    'description' => $msg,
-                                    'url' => $url,
+                                    'description' => $message,
                                     'color' => $color,
-                                    'author' => $author,
-                                    'thumbnail' => $thumbnail,
                                 ),
                             );
+                            $message = null;
                         }
-                        $discordWebhook->send($botname, $message, null, $embeds);
+                        $discordWebhook->send($botname, $message, $botavatar, $embeds);
                     }
                 } catch (Exception $ex) {
-                    
+
+                }
+            }
+        }
+
+        static protected function dateReplace($m){
+            return strftime($m[1]);
+        }
+
+        static public function newRegistration($suffix = '') {
+            global $mybb, $db, $user_info;
+            $entry = $user_info;
+            if ($mybb->settings['discord_webhooks' . $suffix . '_new_registration_enabled']) {
+                $color = $mybb->settings['discord_webhooks' . $suffix . '_new_registration_color'];
+                if (empty($color)) {
+                    $color = '#ffffff';
+                }
+                try {
+                    $discordWebhook = new self($mybb, $suffix, $mybb->settings['discord_webhooks' . $suffix . '_new_registration_url']);
+                    $botname = $mybb->settings['discord_webhooks' . $suffix . '_botname'];
+                    if (!empty($mybb->settings['discord_webhooks' . $suffix . '_new_registration_botname'])) {
+                        $botname = $mybb->settings['discord_webhooks' . $suffix . '_new_registration_botname'];
+                    }
+                    $replace = $entry;
+                    $user = null;
+                    $post = array();
+                    if (!empty($entry['uid'])) {
+                        $query = $db->simple_select("users", "*", "uid='{$entry['uid']}'");
+                        $post = $user = $db->fetch_array($query);
+                        $replace = array_merge($replace, $user);
+                    }
+                    $replace = array_merge($replace, $discordWebhook->getReplaceTable($post['uid']), [
+                        'username' => (!empty($user) ? $user['username'] : $entry['username']),
+                    ]);
+                    $message = $mybb->settings['discord_webhooks' . $suffix . '_new_registration_message'];
+                    foreach ($replace as $from => $to) {
+                        $message = str_replace('{' . $from . '}', $to, $message);
+                        $botname = str_replace('{' . $from . '}', $to, $botname);
+                    }
+                    $message = preg_replace_callback('/{date (.+?)}/is', 'self::dateReplace', $message);
+                    $botname = preg_replace_callback('/{date (.+?)}/is', 'self::dateReplace', $botname);
+                    $embeds = null;
+                    if (in_array($mybb->settings['discord_webhooks' . $suffix . '_new_registration_show_style'], array(1))) {
+                        $msg = $message;
+                        $message = null;
+                        $color = $discordWebhook->getColorIntFromHex($color);
+                        $eArray = array(
+                            'type' => "rich",
+                            'description' => $msg,
+                            'color' => $color,
+                        );
+                        $embeds = array(
+                            $eArray
+                        );
+                    }
+                    $discordWebhook->send($botname, $message, $botavatar, $embeds);
+                } catch (Exception $ex) {
+
                 }
             }
         }

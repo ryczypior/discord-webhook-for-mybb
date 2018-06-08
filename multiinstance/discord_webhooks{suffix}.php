@@ -29,37 +29,9 @@ $plugins->add_hook('datahandler_post_insert_post_end', array('DiscordWebhook', '
 
 require('discord_webhooks/DiscordWebhook.php');
 
-function discord_webhooks{suffix}_info() {
-    global $lang;
-    //print_r($mybb->settings['discord_webhooks_forums']);
-    //exit;
-    $lang->load('discord_webhooks');
-    return array(
-        "name" => $lang->discord_webhook_name . ('{suffix}' != '' ? ' (Suffix: {suffix})' : ''),
-        "description" => $lang->discord_webhook_description . ('{suffix}' != '' ? ' (Suffix: {suffix})' : ''),
-        "website" => "https://github.com/ryczypior/discord-webhook-for-mybb",
-        "author" => "Ryczypiór",
-        "authorsite" => "https://www.github.com/ryczypior",
-        "version" => "1.12",
-        "compatibility" => "18*",
-        "guid" => "",
-        "language_file" => "discord_webhooks",
-        "language_prefix" => "discord_webhooks_",
-        "codename" => "discord_wehooks_for_mybb"
-    );
-}
-
-function discord_webhooks{suffix}_install() {
-    global $mybb, $db, $lang;
-    $lang->load('discord_webhooks');
-
-    $gid = $db->insert_query('settinggroups', array(
-        'name' => 'discord_webhooks{suffix}',
-        'title' => $db->escape_string($lang->discord_webhook_settinggroups_title) . ('{suffix}' != '' ? ' (Suffix: {suffix})' : ''),
-        'description' => $db->escape_string($lang->discord_webhook_settinggroups_description) . ('{suffix}' != '' ? ' (Suffix: {suffix})' : ''),
-            ));
+function discord_webhooks{suffix}_config($gid = null) {
     $position = 1;
-    $has_curl = function_exists('curl_exec');
+    $has_curl = function_exists('curl_strerror');
     $cfg = array(
         array(
             'name' => 'discord_webhooks{suffix}_enabled',
@@ -202,6 +174,66 @@ function discord_webhooks{suffix}_install() {
             'gid' => $gid,
         ),
     );
+    return $cfg;
+}
+
+function discord_webhooks{suffix}_info() {
+    global $mybb, $lang;
+    $lang->load('discord_webhooks');
+    /* Check if there is settings update */
+    if(discord_webhooks{suffix}_is_installed()){
+        $settingGroupId = $db->fetch_field(
+            $db->simple_select('settinggroups', 'gid', "name='discord_webhooks{suffix}'"), 'gid'
+        );
+        $update = false;
+        $cfg = discord_webhooks{suffix}_config($settingGroupId);
+        foreach($cfg as $setting){
+            if($mybb->settings[$setting['name']] === null){
+                $update = true;
+                break;
+            }
+        }
+        if($update){
+            foreach($cfg as $setting){
+                if($mybb->settings[$setting['name']] === null){
+                    $db->insert_query("settings", $setting);
+                } else {
+                    $db->update_query("settings", array(
+                        'title' => $setting['title'],
+                        'description' => $setting['description'],
+                        'optionscode' => $setting['optionscode'],
+                        'disporder' => $setting['disporder'],
+                    ), "name='".$setting['name']."'");
+                }
+            }
+            rebuild_settings();
+        }
+    }
+    return array(
+        "name" => $lang->discord_webhook_name . ('{suffix}' != '' ? ' (Suffix: {suffix})' : ''),
+        "description" => $lang->discord_webhook_description . ('{suffix}' != '' ? ' (Suffix: {suffix})' : ''),
+        "website" => "https://github.com/ryczypior/discord-webhook-for-mybb",
+        "author" => "Ryczypiór",
+        "authorsite" => "https://www.github.com/ryczypior",
+        "version" => "1.12",
+        "compatibility" => "18*",
+        "guid" => "",
+        "language_file" => "discord_webhooks",
+        "language_prefix" => "discord_webhooks_",
+        "codename" => "discord_wehooks_for_mybb"
+    );
+}
+
+function discord_webhooks{suffix}_install() {
+    global $mybb, $db, $lang;
+    $lang->load('discord_webhooks');
+
+    $gid = $db->insert_query('settinggroups', array(
+        'name' => 'discord_webhooks{suffix}',
+        'title' => $db->escape_string($lang->discord_webhook_settinggroups_title) . ('{suffix}' != '' ? ' (Suffix: {suffix})' : ''),
+        'description' => $db->escape_string($lang->discord_webhook_settinggroups_description) . ('{suffix}' != '' ? ' (Suffix: {suffix})' : ''),
+            ));
+    $cfg = discord_webhooks{suffix}_config($gid);
     foreach ($cfg as $settings) {
         $db->insert_query("settings", $settings);
     }
