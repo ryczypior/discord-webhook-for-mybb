@@ -309,8 +309,8 @@ function discord_webhooks{suffix}_config($gid = null) {
         ),
         array(
             'name' => 'discord_webhooks{suffix}_new_post_show',
-            'title' => $db->escape_string($lang->discord_webhooks_show),
-            'description' => $db->escape_string($lang->discord_webhooks_show_description),
+            'title' => $db->escape_string($lang->discord_webhooks_new_post_show),
+            'description' => $db->escape_string($lang->discord_webhooks_new_post_show_description),
             'optionscode' => sprintf('select\n0=%s\n1=%s\n2=%s\n3=%s\n4=%s', $db->escape_string($lang->discord_webhooks_show_n0), $db->escape_string($lang->discord_webhooks_show_n1), $db->escape_string($lang->discord_webhooks_show_n2), $db->escape_string($lang->discord_webhooks_show_n3), $db->escape_string($lang->discord_webhooks_show_n4)),
             'value' => '2',
             'isdefault' => 1,
@@ -329,8 +329,8 @@ function discord_webhooks{suffix}_config($gid = null) {
         ),
         array(
             'name' => 'discord_webhooks{suffix}_new_post_chars_limit',
-            'title' => $db->escape_string($lang->discord_webhooks_new_thread_chars_limit),
-            'description' => $db->escape_string($lang->discord_webhooks_new_thread_chars_limit_description),
+            'title' => $db->escape_string($lang->discord_webhooks_new_post_chars_limit),
+            'description' => $db->escape_string($lang->discord_webhooks_new_post_chars_limit_description),
             'optionscode' => 'text',
             'value' => 500,
             'isdefault' => 1,

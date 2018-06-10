@@ -303,26 +303,28 @@ if (!class_exists('DiscordWebhook')) {
                                 $limit = 2000;
                             }
                             if ($limit <= 0) {
-                                $limit = 2000;
+                                $msg = null;
                             }
                             if (!empty($avatar)) {
                                 $thumbnail = array(
                                     'url' => $avatar,
                                 );
                             }
-                            if (mb_strlen($msg, 'UTF-8') > $limit) {
+                            if ($msg !== null && mb_strlen($msg, 'UTF-8') > $limit) {
                                 $msg = mb_strcut($msg, 0, $limit - 3, 'UTF-8') . '...';
                             }
                             $color = $discordWebhook->getColorIntFromHex($color);
                             $eArray = array(
                                 'type' => "rich",
                                 'title' => $title,
-                                'description' => $msg,
                                 'url' => $url,
                                 'color' => $color,
                                 'author' => $author,
                                 'thumbnail' => $thumbnail,
                             );
+                            if($msg !== null){
+                                $eArray['description'] = $msg;
+                            }
                             if (!$mybb->settings['discord_webhooks' . $suffix . '_new_thread_show_thumbnail']) {
                                 unset($eArray['thumbnail']);
                             }
@@ -474,26 +476,28 @@ if (!class_exists('DiscordWebhook')) {
                                 $limit = 2000;
                             }
                             if ($limit <= 0) {
-                                $limit = 2000;
+                                $msg = null;
                             }
                             if (!empty($avatar)) {
                                 $thumbnail = array(
                                     'url' => $avatar,
                                 );
                             }
-                            if (mb_strlen($msg, 'UTF-8') > $limit) {
+                            if ($msg !== null && mb_strlen($msg, 'UTF-8') > $limit) {
                                 $msg = mb_strcut($msg, 0, $limit, 'UTF-8') . '...';
                             }
                             $color = $discordWebhook->getColorIntFromHex($color);
                             $eArray = array(
                                 'type' => "rich",
                                 'title' => $title,
-                                'description' => $msg,
                                 'url' => $url,
                                 'color' => $color,
                                 'author' => $author,
                                 'thumbnail' => $thumbnail,
                             );
+                            if($msg !== null){
+                                $eArray['description'] = $msg;
+                            }
                             if (!$mybb->settings['discord_webhooks' . $suffix . '_new_post_show_thumbnail']) {
                                 unset($eArray['thumbnail']);
                             }
@@ -575,7 +579,7 @@ if (!class_exists('DiscordWebhook')) {
                             $eArray
                         );
                     }
-                    $discordWebhook->send($botname, $message, $botavatar, $embeds);
+                    $discordWebhook->send($botname, $message, null, $embeds);
                 } catch (Exception $ex) {
 
                 }

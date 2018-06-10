@@ -13,7 +13,9 @@ Instalation:
 * In your forum'S ACP config section (plugin settings) select "Discord Webhooks for MyBB" and paste webhooks url into "Discord Webhooks URL" field
 * In this section you also need to specify which forum threads and posts are being sent to the Discord Webhook
 
-After you save these settings, you should see new threads and posts from selected forums on your Discord channel
+After you save these settings, you should see new threads and posts from selected forums on your Discord channel. 
+
+You can also use different discord webhooks for user registrations, new threads and new posts.
 
 Multiple instances of this plugin:
 =================================
@@ -29,13 +31,13 @@ define("IN_DISCORDWEBHOOKS", true);
 
 $plugins->add_hook('datahandler_post_insert_thread_end', array('DiscordWebhook', 'newThreadinstance_1'));
 $plugins->add_hook('datahandler_post_insert_post_end', array('DiscordWebhook', 'newPostinstance_1'));
+$plugins->add_hook('member_do_register_end', array('DiscordWebhook', 'newRegistrationinstance_1'));
+$plugins->add_hook('admin_config_settings_begin', 'discord_webhooksinstance_1_check_updated_settings');
 
 require('discord_webhooks/DiscordWebhook.php');
 
 function discord_webhooksinstance_1_info() {
     global $lang;
-    //print_r($mybb->settings['discord_webhooks_forums']);
-    //exit;
     $lang->load('discord_webhooks');
     return array(
         "name" => $lang->discord_webhook_name . ('instance_1' != '' ? ' (Suffix: instance_1)' : ''),
@@ -43,7 +45,7 @@ function discord_webhooksinstance_1_info() {
         "website" => "https://github.com/ryczypior/discord-webhook-for-mybb",
         "author" => "Ryczypiór",
         "authorsite" => "https://www.github.com/ryczypior",
-        "version" => "1.1",
+        "version" => "2.0",
         "compatibility" => "18*",
         "guid" => "",
         "language_file" => "discord_webhooks",
