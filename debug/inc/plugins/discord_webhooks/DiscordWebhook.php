@@ -58,6 +58,7 @@ if (!class_exists('DiscordWebhook')) {
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, true);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $message);
@@ -75,7 +76,7 @@ if (!class_exists('DiscordWebhook')) {
                 throw new \Exception($httpcode . ':' . $result);
             }
             curl_close($ch);
-            self::log("cURL - sent OK");
+            self::log("cURL - sent OK - $result");
             return $result;
         }
 
