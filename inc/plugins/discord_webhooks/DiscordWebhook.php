@@ -35,7 +35,7 @@ if (!class_exists('DiscordWebhook')) {
             if (empty($webhookurl)) {
                 $webhookurl = $mybb->settings['discord_webhooks' . $suffix . '_url'];
             }
-            if (preg_match('/^\s*https?:\/\/(ptb\.)?discordapp\.com\/api\/webhooks\//i', $webhookurl) == 0) {
+            if (preg_match('/^\s*https?:\/\/(ptb\.)?discord\.com\/api\/webhooks\//i', $webhookurl) == 0) {
                 throw new Exception('Invalid Discord Webhook URL');
             }
             $this->endpointURL = $webhookurl;
